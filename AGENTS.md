@@ -41,6 +41,17 @@ offset by real-time vehicle acceleration/turns (via device sensors), overlaid on
 3. **Auto mode** — Activity Recognition API → start/stop overlay on `IN_VEHICLE`
 4. **Polish** — orientation handling, dark/light theme inversion, settings UI
 
+## Build & Run
+
+```bash
+# Requires Java 17+ (openjdk@17 via Homebrew) and Android SDK with platform 34
+export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+export ANDROID_HOME=/Users/andrew696/Library/Android/sdk
+
+./gradlew assembleDebug              # build debug APK → app/build/outputs/apk/debug/app-debug.apk
+./gradlew installDebug               # build + install on connected device
+```
+
 ## Key Gotchas
 
 - `SYSTEM_ALERT_WINDOW` cannot be requested via normal permission flow — user must be sent to system Settings overlay page.
