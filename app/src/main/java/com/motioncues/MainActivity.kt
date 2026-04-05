@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import com.motioncues.service.MotionCuesService
 import com.motioncues.ui.screens.MainScreen
+import com.motioncues.ui.screens.OverlayMode
 import com.motioncues.ui.theme.MotionCuesTheme
 
 class MainActivity : ComponentActivity() {
@@ -97,6 +98,14 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    private fun startAutoService() {
+        startForegroundService(
+            Intent(this, MotionCuesService::class.java).apply {
+                action = MotionCuesService.ACTION_START_AUTO
+            }
+        )
+    }
+
     private fun stopService() {
         startService(
             Intent(this, MotionCuesService::class.java).apply {
@@ -117,6 +126,7 @@ class MainActivity : ComponentActivity() {
                         hasOverlayPermission = hasOverlayPermission,
                         onRequestPermissions = { requestPermissions() },
                         onStartService = { startService() },
+                        onStartAutoService = { startAutoService() },
                         onStopService = { stopService() },
                     )
                 }

@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.motioncues.sensors.SettingsStore
 
 enum class OverlayMode { OFF, ON, AUTO }
 
@@ -45,18 +46,19 @@ fun MainScreen(
     hasOverlayPermission: Boolean,
     onRequestPermissions: () -> Unit,
     onStartService: () -> Unit,
+    onStartAutoService: () -> Unit,
     onStopService: () -> Unit,
 ) {
     var mode by remember { mutableStateOf(OverlayMode.OFF) }
-    var sensitivity by remember { mutableFloatStateOf(1f) }
-    var dotAlpha by remember { mutableFloatStateOf(0.4f) }
-    var dotSize by remember { mutableFloatStateOf(6f) }
+    var sensitivity by remember { mutableFloatStateOf(SettingsStore.config.sensitivity) }
+    var dotAlpha by remember { mutableFloatStateOf(SettingsStore.config.dotAlpha) }
+    var dotSize by remember { mutableFloatStateOf(SettingsStore.config.dotSizeDp) }
 
     LaunchedEffect(mode) {
         when (mode) {
             OverlayMode.ON -> onStartService()
             OverlayMode.OFF -> onStopService()
-            OverlayMode.AUTO -> onStartService()
+            OverlayMode.AUTO -> onStartAutoService()
         }
     }
 
@@ -85,19 +87,28 @@ fun MainScreen(
             SettingSlider(
                 label = "Sensitivity",
                 value = sensitivity,
-                onValueChange = { sensitivity = it },
+                onValueChange = {
+                    sensitivity = it
+                    SettingsStore.updateSensitivity(it)
+                },
                 valueRange = 0.2f..2f,
             )
             SettingSlider(
                 label = "Dot Opacity",
                 value = dotAlpha,
-                onValueChange = { dotAlpha = it },
+                onValueChange = {
+                    dotAlpha = it
+                    SettingsStore.updateDotAlpha(it)
+                },
                 valueRange = 0.1f..0.9f,
             )
             SettingSlider(
                 label = "Dot Size",
                 value = dotSize,
-                onValueChange = { dotSize = it },
+                onValueChange = {
+                    dotSize = it
+                    SettingsStore.updateDotSize(it)
+                },
                 valueRange = 2f..16f,
             )
         }
