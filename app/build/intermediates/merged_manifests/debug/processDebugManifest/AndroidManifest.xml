@@ -32,6 +32,7 @@
         android:theme="@style/Theme.MotionCues" >
         <activity
             android:name="com.motioncues.MainActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"
             android:exported="true"
             android:theme="@style/Theme.MotionCues" >
             <intent-filter>

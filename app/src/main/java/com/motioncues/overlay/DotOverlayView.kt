@@ -8,7 +8,7 @@ import android.graphics.Paint
 import android.view.View
 import com.motioncues.sensors.SensorConfig
 
-class DotOverlayView(context: Context) : View(context) {
+class DotOverlayView(context: Context) : View(context.applicationContext) {
 
     private var config = SensorConfig()
     private var lateralOffset: Float = 0f
@@ -19,8 +19,11 @@ class DotOverlayView(context: Context) : View(context) {
         alpha = (config.dotAlpha * 255).toInt()
     }
 
+    private val density: Float
+        get() = resources.displayMetrics.density
+
     private val isDarkTheme: Boolean
-        get() = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+        get() = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
                 Configuration.UI_MODE_NIGHT_YES
 
     override fun onDraw(canvas: Canvas) {
@@ -29,20 +32,23 @@ class DotOverlayView(context: Context) : View(context) {
         dotPaint.color = if (isDarkTheme) Color.WHITE else Color.BLACK
         dotPaint.alpha = (config.dotAlpha * 255).toInt()
 
-        val dotRadiusPx = config.dotSizeDp * resources.displayMetrics.density
-        val edgeMarginPx = config.edgeMarginDp * resources.displayMetrics.density
-        val dotSpacingPx = config.dotSpacingDp * resources.displayMetrics.density
+        val dotRadiusPx = config.dotSizeDp * density
+        val edgeMarginPx = config.edgeMarginDp * density
+        val dotSpacingPx = config.dotSpacingDp * density
 
         val w = width.toFloat()
         val h = height.toFloat()
 
-        val dotsPerSide = ((h - 2 * edgeMarginPx) / dotSpacingPx).toInt().coerceAtLeast(1)
+        val dotsPerSide = config.dotCount
 
-        val latPx = lateralOffset * resources.displayMetrics.density
-        val lonPx = longitudinalOffset * resources.displayMetrics.density
+        val latPx = lateralOffset * density
+        val lonPx = longitudinalOffset * density
 
-        for (i in 0..dotsPerSide) {
-            val baseY = edgeMarginPx + i * dotSpacingPx
+        val usableHeight = h - 2 * edgeMarginPx
+        val spacing = if (dotsPerSide > 1) usableHeight / (dotsPerSide - 1) else 0f
+
+        for (i in 0 until dotsPerSide) {
+            val baseY = edgeMarginPx + i * spacing
             val y = (baseY + lonPx).coerceIn(edgeMarginPx, h - edgeMarginPx)
 
             val leftX = (edgeMarginPx + latPx).coerceIn(edgeMarginPx, w / 2f)
@@ -51,6 +57,12 @@ class DotOverlayView(context: Context) : View(context) {
             val rightX = (w - edgeMarginPx - latPx).coerceIn(w / 2f, w - edgeMarginPx)
             canvas.drawCircle(rightX, y, dotRadiusPx, dotPaint)
         }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration?) {
+        super.onConfigurationChanged(newConfig)
+        requestLayout()
+        invalidate()
     }
 
     fun updateOffsets(lateral: Float, longitudinal: Float) {

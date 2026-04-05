@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,6 +39,10 @@ import androidx.compose.ui.unit.dp
 import com.motioncues.sensors.SettingsStore
 
 enum class OverlayMode { OFF, ON, AUTO }
+
+private object PersistedState {
+    var mode: OverlayMode = OverlayMode.OFF
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,12 +54,14 @@ fun MainScreen(
     onStartAutoService: () -> Unit,
     onStopService: () -> Unit,
 ) {
-    var mode by remember { mutableStateOf(OverlayMode.OFF) }
+    var mode by remember { mutableStateOf(PersistedState.mode) }
     var sensitivity by remember { mutableFloatStateOf(SettingsStore.config.sensitivity) }
     var dotAlpha by remember { mutableFloatStateOf(SettingsStore.config.dotAlpha) }
     var dotSize by remember { mutableFloatStateOf(SettingsStore.config.dotSizeDp) }
+    var dotCount by remember { mutableIntStateOf(SettingsStore.config.dotCount) }
 
     LaunchedEffect(mode) {
+        PersistedState.mode = mode
         when (mode) {
             OverlayMode.ON -> onStartService()
             OverlayMode.OFF -> onStopService()
@@ -110,6 +117,16 @@ fun MainScreen(
                     SettingsStore.updateDotSize(it)
                 },
                 valueRange = 2f..16f,
+            )
+            SettingSlider(
+                label = "Dot Count",
+                value = dotCount.toFloat(),
+                onValueChange = {
+                    dotCount = it.toInt()
+                    SettingsStore.updateDotCount(it.toInt())
+                },
+                valueRange = 4f..30f,
+                isInt = true,
             )
         }
     }
@@ -196,6 +213,7 @@ private fun SettingSlider(
     value: Float,
     onValueChange: (Float) -> Unit,
     valueRange: ClosedFloatingPointRange<Float>,
+    isInt: Boolean = false,
 ) {
     Column {
         Row(
@@ -204,7 +222,8 @@ private fun SettingSlider(
         ) {
             Text(label)
             Text(
-                String.format("%.1f", value),
+                if (isInt) value.toInt().toString()
+                else String.format("%.1f", value),
                 style = MaterialTheme.typography.bodySmall
             )
         }

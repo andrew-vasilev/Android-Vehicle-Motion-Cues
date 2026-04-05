@@ -11,10 +11,20 @@ class DotOverlayManager(private val context: Context) {
         context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private var overlayView: DotOverlayView? = null
 
+    private var currentConfig: SensorConfig = SensorConfig()
+    private var currentLateral: Float = 0f
+    private var currentLongitudinal: Float = 0f
+
     fun show() {
         if (overlayView != null) return
+        addOverlay()
+    }
 
-        overlayView = DotOverlayView(context)
+    private fun addOverlay() {
+        overlayView = DotOverlayView(context).apply {
+            updateConfig(currentConfig)
+            updateOffsets(currentLateral, currentLongitudinal)
+        }
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
@@ -22,11 +32,18 @@ class DotOverlayManager(private val context: Context) {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
                     or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                    or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                    or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                    or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         )
 
         windowManager.addView(overlayView, params)
+    }
+
+    fun recreate() {
+        overlayView?.let { windowManager.removeView(it) }
+        overlayView = null
+        addOverlay()
     }
 
     fun hide() {
@@ -35,10 +52,13 @@ class DotOverlayManager(private val context: Context) {
     }
 
     fun updateOffsets(lateralOffset: Float, longitudinalOffset: Float) {
+        currentLateral = lateralOffset
+        currentLongitudinal = longitudinalOffset
         overlayView?.updateOffsets(lateralOffset, longitudinalOffset)
     }
 
     fun updateConfig(config: SensorConfig) {
+        currentConfig = config
         overlayView?.updateConfig(config)
     }
 }

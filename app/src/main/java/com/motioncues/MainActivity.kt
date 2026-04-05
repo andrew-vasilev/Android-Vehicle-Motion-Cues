@@ -14,44 +14,61 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import com.motioncues.service.MotionCuesService
 import com.motioncues.ui.screens.MainScreen
-import com.motioncues.ui.screens.OverlayMode
 import com.motioncues.ui.theme.MotionCuesTheme
 
 class MainActivity : ComponentActivity() {
 
-    private var hasOverlayPermission: Boolean = false
-    private var hasNotificationPermission: Boolean = false
-    private var hasActivityRecognitionPermission: Boolean = false
+    private var hasOverlayPermission by mutableStateOf(false)
+    private var hasNotificationPermission by mutableStateOf(false)
+    private var hasActivityRecognitionPermission by mutableStateOf(false)
+    private var permissionsGranted by mutableStateOf(false)
 
     private val overlayPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
         refreshPermissions()
-        render()
     }
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
         refreshPermissions()
-        render()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         refreshPermissions()
-        render()
+
+        setContent {
+            MotionCuesTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    MainScreen(
+                        allPermissionsGranted = permissionsGranted,
+                        hasOverlayPermission = hasOverlayPermission,
+                        onRequestPermissions = { requestPermissions() },
+                        onStartService = { startOnService() },
+                        onStartAutoService = { startAutoService() },
+                        onStopService = { stopTheService() },
+                    )
+                }
+            }
+        }
     }
 
     override fun onResume() {
         super.onResume()
         refreshPermissions()
-        render()
     }
 
     private fun refreshPermissions() {
@@ -64,10 +81,8 @@ class MainActivity : ComponentActivity() {
         hasActivityRecognitionPermission = ContextCompat.checkSelfPermission(
             this, Manifest.permission.ACTIVITY_RECOGNITION
         ) == PackageManager.PERMISSION_GRANTED
+        permissionsGranted = hasOverlayPermission && hasNotificationPermission && hasActivityRecognitionPermission
     }
-
-    private fun allPermissionsGranted(): Boolean =
-        hasOverlayPermission && hasNotificationPermission && hasActivityRecognitionPermission
 
     private fun requestPermissions() {
         if (!hasOverlayPermission) {
@@ -90,7 +105,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun startService() {
+    private fun startOnService() {
         startForegroundService(
             Intent(this, MotionCuesService::class.java).apply {
                 action = MotionCuesService.ACTION_START
@@ -106,31 +121,11 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    private fun stopService() {
+    private fun stopTheService() {
         startService(
             Intent(this, MotionCuesService::class.java).apply {
                 action = MotionCuesService.ACTION_STOP
             }
         )
-    }
-
-    private fun render() {
-        setContent {
-            MotionCuesTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    MainScreen(
-                        allPermissionsGranted = allPermissionsGranted(),
-                        hasOverlayPermission = hasOverlayPermission,
-                        onRequestPermissions = { requestPermissions() },
-                        onStartService = { startService() },
-                        onStartAutoService = { startAutoService() },
-                        onStopService = { stopService() },
-                    )
-                }
-            }
-        }
     }
 }

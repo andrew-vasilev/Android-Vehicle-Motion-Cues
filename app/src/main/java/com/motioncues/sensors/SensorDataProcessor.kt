@@ -37,6 +37,9 @@ class SensorDataProcessor(
     private var velocityLongitudinal = 0f
 
     private var lastTimestamp = 0L
+    private var lastEmitTimestamp = 0L
+
+    private val emitIntervalNs = 33_000_000L
 
     private val display: Display
         get() = (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager)
@@ -45,20 +48,20 @@ class SensorDataProcessor(
     fun start() {
         if (linearAccelSensor != null) {
             sensorManager.registerListener(
-                this, linearAccelSensor, SensorManager.SENSOR_DELAY_GAME
+                this, linearAccelSensor, SensorManager.SENSOR_DELAY_UI
             )
             useFallbackAccel = false
         } else if (accelerometerSensor != null && gravitySensor != null) {
             sensorManager.registerListener(
-                this, gravitySensor, SensorManager.SENSOR_DELAY_GAME
+                this, gravitySensor, SensorManager.SENSOR_DELAY_UI
             )
             sensorManager.registerListener(
-                this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME
+                this, accelerometerSensor, SensorManager.SENSOR_DELAY_UI
             )
             useFallbackAccel = true
         } else if (accelerometerSensor != null) {
             sensorManager.registerListener(
-                this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME
+                this, accelerometerSensor, SensorManager.SENSOR_DELAY_UI
             )
             useFallbackAccel = true
         }
@@ -66,6 +69,12 @@ class SensorDataProcessor(
 
     fun stop() {
         sensorManager.unregisterListener(this)
+        filteredLateral = 0f
+        filteredLongitudinal = 0f
+        velocityLateral = 0f
+        velocityLongitudinal = 0f
+        lastTimestamp = 0L
+        lastEmitTimestamp = 0L
     }
 
     override fun onSensorChanged(event: SensorEvent) {
@@ -144,6 +153,9 @@ class SensorDataProcessor(
         val lateralOffset = velocityLateral.coerceIn(-maxOffset, maxOffset)
         val longitudinalOffset = velocityLongitudinal.coerceIn(-maxOffset, maxOffset)
 
-        onOffsetsChanged(lateralOffset, longitudinalOffset)
+        if (now - lastEmitTimestamp >= emitIntervalNs) {
+            lastEmitTimestamp = now
+            onOffsetsChanged(lateralOffset, longitudinalOffset)
+        }
     }
 }

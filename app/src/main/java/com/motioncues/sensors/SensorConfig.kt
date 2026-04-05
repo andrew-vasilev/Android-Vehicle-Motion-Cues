@@ -5,6 +5,7 @@ data class SensorConfig(
     val dotAlpha: Float = 0.4f,
     val dotSpacingDp: Float = 40f,
     val edgeMarginDp: Float = 20f,
+    val dotCount: Int = 12,
     val sensitivity: Float = 1.5f,
     val lowPassAlpha: Float = 0.35f,
     val springStiffness: Float = 120f,

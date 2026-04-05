@@ -1,17 +1,10 @@
 package com.motioncues.sensors
 
-import com.motioncues.overlay.DotOverlayManager
-
 object SettingsStore {
     var config: SensorConfig = SensorConfig()
         private set
 
     var onConfigChanged: ((SensorConfig) -> Unit)? = null
-
-    fun update(update: SensorConfig.() -> SensorConfig) {
-        config = config.update()
-        onConfigChanged?.invoke(config)
-    }
 
     fun updateDotAlpha(alpha: Float) {
         config = config.copy(dotAlpha = alpha)
@@ -20,6 +13,11 @@ object SettingsStore {
 
     fun updateDotSize(size: Float) {
         config = config.copy(dotSizeDp = size)
+        onConfigChanged?.invoke(config)
+    }
+
+    fun updateDotCount(count: Int) {
+        config = config.copy(dotCount = count)
         onConfigChanged?.invoke(config)
     }
 
